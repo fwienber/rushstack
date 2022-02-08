@@ -588,7 +588,7 @@ packages:
     dev: true
 
   /eslint-utils/3.0.0_eslint@8.7.0:
-    resolution: {integrity: sha1-iuuvrOc0W7M1WdsKHxOh0tSMNnI=}
+    resolution: {integrity: sha512-uuQC43IGctw68pJA1RgbQS8/NP7rch6Cwd4j3ZBtgo4/8Flj4eGE7ZYSZRN3iq5pVUv6GPdW5Z1RFleo84uLDA==}
     engines: {node: ^10.0.0 || ^12.0.0 || >= 14.0.0}
     peerDependencies:
       eslint: '>=5'
@@ -598,7 +598,7 @@ packages:
     dev: true
 
   /eslint-visitor-keys/2.1.0:
-    resolution: {integrity: sha1-9lMoJZMFknOSyTjtROsKXJsr0wM=}
+    resolution: {integrity: sha512-0rSmRBzXgDzIsD6mGdJgevzgezI534Cer5L/vyMX0kHzT/jiB43jRhd9YUlMGYLQy2zprNmoT8qasCGtY+QaKw==}
     engines: {node: '>=10'}
     dev: true
 
