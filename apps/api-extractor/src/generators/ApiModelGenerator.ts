@@ -54,7 +54,7 @@ export class ApiModelGenerator {
     this._apiModel = new ApiModel();
     this._referenceGenerator = new DeclarationReferenceGenerator(
       collector.packageJsonLookup,
-      collector.workingPackage.name,
+      collector.workingPackage,
       collector.program,
       collector.typeChecker,
       collector.bundledPackageNames
@@ -75,13 +75,15 @@ export class ApiModelGenerator {
     });
     this._apiModel.addMember(apiPackage);
 
-    const apiEntryPoint: ApiEntryPoint = new ApiEntryPoint({ name: '' });
-    apiPackage.addMember(apiEntryPoint);
+    for (const [entryPoint, entities] of this._collector.entities.entries()) {
+      const apiEntryPoint: ApiEntryPoint = new ApiEntryPoint({ name: entryPoint.modulePath });
+      apiPackage.addMember(apiEntryPoint);
 
-    // Create a CollectorEntity for each top-level export
-    for (const entity of this._collector.entities) {
-      if (entity.exported) {
-        this._processAstEntity(entity.astEntity, entity.nameForEmit, apiEntryPoint);
+      // Create a CollectorEntity for each top-level export
+      for (const entity of entities) {
+        if (entity.exported) {
+          this._processAstEntity(entity.astEntity, entity.nameForEmit, apiEntryPoint, undefined);
+        }
       }
     }
 
@@ -91,14 +93,14 @@ export class ApiModelGenerator {
   private _processAstEntity(
     astEntity: AstEntity,
     exportedName: string | undefined,
-    parentApiItem: ApiItemContainerMixin
+    apiEntryPoint: ApiEntryPoint | undefined,
+    parentApiItem: ApiItemContainerMixin | undefined
   ): void {
-    if (astEntity instanceof AstSymbol) {
+    if (astEntity instanceof AstSymbol && apiEntryPoint !== undefined) {
       // Skip ancillary declarations; we will process them with the main declaration
       for (const astDeclaration of this._collector.getNonAncillaryDeclarations(astEntity)) {
-        this._processDeclaration(astDeclaration, exportedName, parentApiItem);
+        this._processDeclaration(astDeclaration, exportedName, apiEntryPoint);
       }
-      return;
     }
 
     if (astEntity instanceof AstNamespaceImport) {
@@ -116,7 +118,9 @@ export class ApiModelGenerator {
       //
       // This could be improved in the future, but it requires a stable mechanism for choosing an associated parent.
       // For thoughts about this:  https://github.com/microsoft/rushstack/issues/1308
-      this._processAstModule(astEntity.astModule, exportedName, parentApiItem);
+      if (parentApiItem) {
+        this._processAstModule(astEntity.astModule, exportedName, parentApiItem);
+      }
       return;
     }
 
@@ -149,7 +153,7 @@ export class ApiModelGenerator {
 
     astModule.astModuleExportInfo!.exportedLocalEntities.forEach(
       (exportedEntity: AstEntity, exportedName: string) => {
-        this._processAstEntity(exportedEntity, exportedName, apiNamespace!);
+        this._processAstEntity(exportedEntity, exportedName, undefined, apiNamespace!);
       }
     );
   }

@@ -4,10 +4,10 @@
 
 ```ts
 
-// @public
+// @public (undocumented)
 function add(a: number, b: number): number;
 
-// @public
+// @public (undocumented)
 function add_2(a: bigint, b: bigint): bigint;
 
 declare namespace calculator {
@@ -28,13 +28,13 @@ declare namespace calculator2 {
 }
 export { calculator2 }
 
-// @public
+// @public (undocumented)
 const calucatorVersion: string;
 
-// @beta
+// @beta (undocumented)
 function subtract(a: number, b: number): number;
 
-// @beta
+// @beta (undocumented)
 function subtract_2(a: bigint, b: bigint): bigint;
 
 // (No @packageDocumentation comment for this package)

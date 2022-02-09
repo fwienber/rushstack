@@ -6,6 +6,8 @@
 
 import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
+import { JsonSchema } from '@rushstack/node-core-library';
+import { NewlineKind } from '@rushstack/node-core-library';
 
 // @public
 export interface IApiDocumenterPluginManifest {
@@ -31,6 +33,14 @@ export interface IMarkdownDocumenterFeatureOnBeforeWritePageArgs {
 
 // @public
 export interface IMarkdownDocumenterFeatureOnFinishedArgs {
+}
+
+// @public
+export class MarkdownDocumenter {
+    // Warning: (ae-forgotten-export) The symbol "IMarkdownDocumenterOptions" needs to be exported by the entry point index.d.ts
+    constructor(options: IMarkdownDocumenterOptions);
+    // (undocumented)
+    generateFiles(): void;
 }
 
 // @public

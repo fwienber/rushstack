@@ -18,7 +18,7 @@ import {
 } from '@rushstack/node-core-library';
 import { RigConfig } from '@rushstack/rig-package';
 
-import { IConfigFile, IExtractorMessagesConfig } from './IConfigFile';
+import { IConfigFile, IExtractorMessagesConfig, IConfigEntryPoint } from './IConfigFile';
 import { PackageMetadataManager } from '../analyzer/PackageMetadataManager';
 import { MessageRouter } from '../collector/MessageRouter';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
@@ -142,6 +142,7 @@ interface IExtractorConfigParameters {
   packageJson: INodePackageJson | undefined;
   packageFolder: string | undefined;
   mainEntryPointFilePath: string;
+  additionalEntryPoints: IConfigEntryPoint[];
   bundledPackages: string[];
   tsconfigFilePath: string;
   overrideTsconfig: {} | undefined;
@@ -214,7 +215,10 @@ export class ExtractorConfig {
   public readonly packageFolder: string | undefined;
 
   /** {@inheritDoc IConfigFile.mainEntryPointFilePath} */
-  public readonly mainEntryPointFilePath: string;
+  public readonly mainEntryPointFilePath: IConfigEntryPoint;
+
+  /** {@inheritDoc IConfigFile.additionalEntryPoints} */
+  public readonly additionalEntryPoints: IConfigEntryPoint[];
 
   /** {@inheritDoc IConfigFile.bundledPackages} */
   public readonly bundledPackages: string[];
@@ -283,7 +287,11 @@ export class ExtractorConfig {
     this.projectFolder = parameters.projectFolder;
     this.packageJson = parameters.packageJson;
     this.packageFolder = parameters.packageFolder;
-    this.mainEntryPointFilePath = parameters.mainEntryPointFilePath;
+    this.mainEntryPointFilePath = {
+      modulePath: '',
+      filePath: parameters.mainEntryPointFilePath
+    };
+    this.additionalEntryPoints = parameters.additionalEntryPoints;
     this.bundledPackages = parameters.bundledPackages;
     this.tsconfigFilePath = parameters.tsconfigFilePath;
     this.overrideTsconfig = parameters.overrideTsconfig;
@@ -570,6 +578,20 @@ export class ExtractorConfig {
       );
     }
 
+    if (configFile.additionalEntryPoints) {
+      const entryPointWithAbsolutePath: IConfigEntryPoint[] = [];
+      for (const entryPoint of configFile.additionalEntryPoints) {
+        const absoluteFilePath: string = ExtractorConfig._resolveConfigFileRelativePath(
+          'additionalEntryPoints',
+          entryPoint.filePath,
+          currentConfigFolderPath
+        );
+
+        entryPointWithAbsolutePath.push({ ...entryPoint, filePath: absoluteFilePath });
+      }
+      configFile.additionalEntryPoints = entryPointWithAbsolutePath;
+    }
+
     if (configFile.compiler) {
       if (configFile.compiler.tsconfigFilePath) {
         configFile.compiler.tsconfigFilePath = ExtractorConfig._resolveConfigFileRelativePath(
@@ -802,6 +824,27 @@ export class ExtractorConfig {
         throw new Error('The "mainEntryPointFilePath" path does not exist: ' + mainEntryPointFilePath);
       }
 
+      const additionalEntryPoints: IConfigEntryPoint[] = [];
+      for (const entryPoint of configObject.additionalEntryPoints || []) {
+        const absoluteEntryPointFilePath: string = ExtractorConfig._resolvePathWithTokens(
+          'entryPointFilePath',
+          entryPoint.filePath,
+          tokenContext
+        );
+
+        if (!ExtractorConfig.hasDtsFileExtension(absoluteEntryPointFilePath)) {
+          throw new Error(
+            'The "additionalEntryPoints" value is not a declaration file: ' + absoluteEntryPointFilePath
+          );
+        }
+
+        if (!FileSystem.exists(absoluteEntryPointFilePath)) {
+          throw new Error('The "additionalEntryPoints" path does not exist: ' + absoluteEntryPointFilePath);
+        }
+
+        additionalEntryPoints.push({ ...entryPoint, filePath: absoluteEntryPointFilePath });
+      }
+
       const bundledPackages: string[] = configObject.bundledPackages || [];
       for (const bundledPackage of bundledPackages) {
         if (!PackageName.isValidName(bundledPackage)) {
@@ -921,6 +964,15 @@ export class ExtractorConfig {
 
       if (configObject.dtsRollup) {
         rollupEnabled = !!configObject.dtsRollup.enabled;
+
+        // d.ts rollup is not supported when there are more than one entry points.
+        if (rollupEnabled && additionalEntryPoints.length > 0) {
+          throw new Error(
+            `It seems that you have dtsRollup enabled while you also have defined additionalEntryPoints.` +
+              `dtsRollup is not supported when there are multiple entry points in your package`
+          );
+        }
+
         untrimmedFilePath = ExtractorConfig._resolvePathWithTokens(
           'untrimmedFilePath',
           configObject.dtsRollup.untrimmedFilePath,
@@ -956,6 +1008,7 @@ export class ExtractorConfig {
         packageJson,
         packageFolder,
         mainEntryPointFilePath,
+        additionalEntryPoints,
         bundledPackages,
         tsconfigFilePath,
         overrideTsconfig: configObject.compiler.overrideTsconfig,

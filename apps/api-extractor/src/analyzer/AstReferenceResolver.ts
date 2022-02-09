@@ -7,7 +7,7 @@ import * as tsdoc from '@microsoft/tsdoc';
 import { AstSymbolTable } from './AstSymbolTable';
 import { AstEntity } from './AstEntity';
 import { AstDeclaration } from './AstDeclaration';
-import { WorkingPackage } from '../collector/WorkingPackage';
+import { WorkingPackage, IWorkingPackageEntryPoint } from '../collector/WorkingPackage';
 import { AstModule } from './AstModule';
 import { Collector } from '../collector/Collector';
 import { DeclarationMetadata } from '../collector/DeclarationMetadata';
@@ -65,8 +65,12 @@ export class AstReferenceResolver {
       return new ResolverFailure('Import paths are not supported');
     }
 
+    const defaultEntryPoint: IWorkingPackageEntryPoint = this._workingPackage.entryPoints.find((ep) =>
+      this._workingPackage.isDefaultEntryPoint(ep)
+    )!;
+
     const astModule: AstModule = this._astSymbolTable.fetchAstModuleFromWorkingPackage(
-      this._workingPackage.entryPointSourceFile
+      defaultEntryPoint.sourceFile
     );
 
     if (declarationReference.memberReferences.length === 0) {

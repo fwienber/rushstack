@@ -20,43 +20,43 @@ export class ValidationEnhancer {
   public static analyze(collector: Collector): void {
     const alreadyWarnedEntities: Set<AstEntity> = new Set<AstEntity>();
 
-    for (const entity of collector.entities) {
-      if (!entity.consumable) {
-        continue;
-      }
-
-      if (entity.astEntity instanceof AstSymbol) {
-        // A regular exported AstSymbol
-
-        const astSymbol: AstSymbol = entity.astEntity;
-
-        astSymbol.forEachDeclarationRecursive((astDeclaration: AstDeclaration) => {
-          ValidationEnhancer._checkReferences(collector, astDeclaration, alreadyWarnedEntities);
-        });
-
-        const symbolMetadata: SymbolMetadata = collector.fetchSymbolMetadata(astSymbol);
-        ValidationEnhancer._checkForInternalUnderscore(collector, entity, astSymbol, symbolMetadata);
-        ValidationEnhancer._checkForInconsistentReleaseTags(collector, astSymbol, symbolMetadata);
-      } else if (entity.astEntity instanceof AstNamespaceImport) {
-        // A namespace created using "import * as ___ from ___"
-        const astNamespaceImport: AstNamespaceImport = entity.astEntity;
-
-        const astModuleExportInfo: AstModuleExportInfo =
-          astNamespaceImport.fetchAstModuleExportInfo(collector);
-
-        for (const namespaceMemberAstEntity of astModuleExportInfo.exportedLocalEntities.values()) {
-          if (namespaceMemberAstEntity instanceof AstSymbol) {
-            const astSymbol: AstSymbol = namespaceMemberAstEntity;
-
-            astSymbol.forEachDeclarationRecursive((astDeclaration: AstDeclaration) => {
+    for (const entities of collector.entities.values()) {
+      for (const entity of entities) {
+        if (entity.astEntity instanceof AstSymbol) {
+          if (entity.exported) {
+            entity.astEntity.forEachDeclarationRecursive((astDeclaration: AstDeclaration) => {
               ValidationEnhancer._checkReferences(collector, astDeclaration, alreadyWarnedEntities);
             });
 
-            const symbolMetadata: SymbolMetadata = collector.fetchSymbolMetadata(astSymbol);
+            const symbolMetadata: SymbolMetadata = collector.fetchSymbolMetadata(entity.astEntity);
+            ValidationEnhancer._checkForInternalUnderscore(
+              collector,
+              entity,
+              entity.astEntity,
+              symbolMetadata
+            );
+          }
+        } else if (entity.astEntity instanceof AstNamespaceImport) {
+          // A namespace created using "import * as ___ from ___"
+          const astNamespaceImport: AstNamespaceImport = entity.astEntity;
 
-            // (Don't apply ValidationEnhancer._checkForInternalUnderscore() for AstNamespaceImport members)
+          const astModuleExportInfo: AstModuleExportInfo =
+            astNamespaceImport.fetchAstModuleExportInfo(collector);
 
-            ValidationEnhancer._checkForInconsistentReleaseTags(collector, astSymbol, symbolMetadata);
+          for (const namespaceMemberAstEntity of astModuleExportInfo.exportedLocalEntities.values()) {
+            if (namespaceMemberAstEntity instanceof AstSymbol) {
+              const astSymbol: AstSymbol = namespaceMemberAstEntity;
+
+              astSymbol.forEachDeclarationRecursive((astDeclaration: AstDeclaration) => {
+                ValidationEnhancer._checkReferences(collector, astDeclaration, alreadyWarnedEntities);
+              });
+
+              const symbolMetadata: SymbolMetadata = collector.fetchSymbolMetadata(astSymbol);
+
+              // (Don't apply ValidationEnhancer._checkForInternalUnderscore() for AstNamespaceImport members)
+
+              ValidationEnhancer._checkForInconsistentReleaseTags(collector, astSymbol, symbolMetadata);
+            }
           }
         }
       }
@@ -239,8 +239,11 @@ export class ValidationEnhancer {
           );
         }
       } else {
+        // TODO: how to handle multiple entry points? e.g. how do we know from which entry point the symbol should be exported?
+        // We use the default entry point for now
         const entryPointFilename: string = path.basename(
-          collector.workingPackage.entryPointSourceFile.fileName
+          collector.workingPackage.entryPoints.find((ep) => collector.workingPackage.isDefaultEntryPoint(ep))!
+            .sourceFile.fileName
         );
 
         if (!alreadyWarnedEntities.has(referencedEntity)) {

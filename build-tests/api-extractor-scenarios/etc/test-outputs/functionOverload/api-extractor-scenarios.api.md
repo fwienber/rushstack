@@ -13,8 +13,6 @@ export function combine(x: string, y: string): string;
 // @public (undocumented)
 export function combine(x: number, y: number): number;
 
-// Warning: (ae-internal-mixed-release-tag) Mixed release tags are not allowed for "_combine" because one of its declarations is marked as @internal
-//
 // @beta (undocumented)
 export function _combine(x: string, y: string): string;
 
