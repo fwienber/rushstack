@@ -316,6 +316,12 @@ export interface IConfigFile {
   projectFolder?: string;
 
   /**
+   * Specifies the folder to be used to search for the package.json. If no value is specified, the folder of the
+   * config is used by default.
+   */
+  packageFolder?: string;
+
+  /**
    * Specifies the .d.ts file to be used as the starting point for analysis.  API Extractor
    * analyzes the symbols exported by this module.
    *

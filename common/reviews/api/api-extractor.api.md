@@ -203,6 +203,7 @@ export interface IConfigFile {
     mainEntryPointFilePath: string;
     messages?: IExtractorMessagesConfig;
     newlineKind?: 'crlf' | 'lf' | 'os';
+    packageFolder?: string;
     projectFolder?: string;
     testMode?: boolean;
     // @beta
@@ -264,6 +265,5 @@ export interface IExtractorMessagesConfig {
     extractorMessageReporting?: IConfigMessageReportingTable;
     tsdocMessageReporting?: IConfigMessageReportingTable;
 }
-
 
 ```

@@ -457,8 +457,12 @@ export class ExtractorConfig {
     const configObject: IConfigFile = ExtractorConfig.loadFile(configObjectFullPath);
 
     const packageJsonLookup: PackageJsonLookup = new PackageJsonLookup();
-    const packageJsonFullPath: string | undefined =
-      packageJsonLookup.tryGetPackageJsonFilePathFor(configObjectFullPath);
+    let packageJsonFullPath: string | undefined = undefined;
+    if (configObject.packageFolder) {
+      packageJsonFullPath = packageJsonLookup.tryGetPackageJsonFilePathFor(configObject.packageFolder);
+    } else {
+      packageJsonFullPath = packageJsonLookup.tryGetPackageJsonFilePathFor(configObjectFullPath);
+    }
 
     const extractorConfig: ExtractorConfig = ExtractorConfig.prepare({
       configObject,

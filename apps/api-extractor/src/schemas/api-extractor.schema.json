@@ -18,6 +18,10 @@
       "type": "string"
     },
 
+    "packageFolder": {
+      "description": "Determines where to look for the package.json. If no value is set, the folder of the extractor config is used by default.",
+      "type": "string"
+    },
     "mainEntryPointFilePath": {
       "description": "Specifies the .d.ts file to be used as the starting point for analysis.  API Extractor analyzes the symbols exported by this module. The file extension must be \".d.ts\" and not \".ts\". The path is resolved relative to the folder of the config file that contains the setting; to change this, prepend a folder token such as \"<projectFolder>\".",
       "type": "string"
