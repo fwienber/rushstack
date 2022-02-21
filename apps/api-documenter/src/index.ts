@@ -17,4 +17,5 @@ export {
   IMarkdownDocumenterFeatureOnFinishedArgs,
   MarkdownDocumenterFeature
 } from './plugin/MarkdownDocumenterFeature';
+export { ApiDocumenterAccess } from './api/ApiDocumenterAccess';
 export { PluginFeature, PluginFeatureContext, PluginFeatureInitialization } from './plugin/PluginFeature';
