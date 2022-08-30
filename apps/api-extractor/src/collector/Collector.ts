@@ -314,29 +314,9 @@ export class Collector {
     return collectorEntity?.nameForEmit ?? symbol.name;
   }
 
-  public getParentSymbols(symbol: ts.Symbol): ts.Symbol[] {
-    const result: ts.Symbol[] = [];
-    let currentSymbol: ts.Symbol | undefined = symbol;
-    while (currentSymbol) {
-      currentSymbol = this._getParentSymbol(currentSymbol);
-      if (currentSymbol) {
-        result.unshift(currentSymbol);
-      }
-    }
-    return result;
-  }
-
-  private _getParentSymbol(symbol: ts.Symbol): ts.Symbol | undefined {
+  public getNamespacePath(symbol: ts.Symbol): string[] {
     const collectorEntity: CollectorEntity | undefined = this._entitiesBySymbol.get(symbol);
-    if (collectorEntity) {
-      const firstNamespaceImport: AstNamespaceImport | undefined = [
-        ...collectorEntity.astNamespaceImports
-      ][0];
-      if (firstNamespaceImport) {
-        return (firstNamespaceImport.declaration as unknown as ts.Type).symbol;
-      }
-    }
-    return undefined;
+    return collectorEntity ? collectorEntity.getParentPath() : [];
   }
 
   public fetchSymbolMetadata(astSymbol: AstSymbol): SymbolMetadata {

@@ -119,7 +119,7 @@ export class DeclarationReferenceGenerator {
       if (namedDeclaration && ts.isIdentifier(namedDeclaration)) {
         const collectorEntity: CollectorEntity | undefined =
           this._collector.tryGetEntityForNode(namedDeclaration);
-        if (collectorEntity && collectorEntity.consumable) {
+        if (collectorEntity && collectorEntity.exported) {
           return Navigation.Exports;
         }
       }
@@ -277,10 +277,10 @@ export class DeclarationReferenceGenerator {
         /*includeModuleSymbols*/ true
       );
       return this._collector
-        .getParentSymbols(symbol)
+        .getNamespacePath(symbol)
         .reduce(
           (parentRef, currentSymbol) =>
-            parentRef && parentRef.addNavigationStep(Navigation.Exports, currentSymbol.getName()),
+            parentRef && parentRef.addNavigationStep(Navigation.Exports, currentSymbol),
           parentRef
         );
     }
