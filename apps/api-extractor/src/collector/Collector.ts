@@ -314,6 +314,11 @@ export class Collector {
     return collectorEntity?.nameForEmit ?? symbol.name;
   }
 
+  public getNamespacePath(symbol: ts.Symbol): string[] {
+    const collectorEntity: CollectorEntity | undefined = this._entitiesBySymbol.get(symbol);
+    return collectorEntity ? collectorEntity.getParentPath() : [];
+  }
+
   public fetchSymbolMetadata(astSymbol: AstSymbol): SymbolMetadata {
     if (astSymbol.symbolMetadata === undefined) {
       this._fetchSymbolMetadata(astSymbol);
@@ -435,6 +440,8 @@ export class Collector {
       this._entitiesByAstEntity.set(astEntity, entity);
       if (astEntity instanceof AstSymbol) {
         this._entitiesBySymbol.set(astEntity.followedSymbol, entity);
+      } else if (astEntity instanceof AstNamespaceImport) {
+        this._entitiesBySymbol.set((astEntity.declaration as unknown as ts.Type).symbol, entity);
       }
       this._entities.push(entity);
       this._collectReferenceDirectives(astEntity);

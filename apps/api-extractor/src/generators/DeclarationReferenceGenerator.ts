@@ -271,11 +271,18 @@ export class DeclarationReferenceGenerator {
     // First, try to find a parent symbol via the symbol tree.
     const parentSymbol: ts.Symbol | undefined = TypeScriptInternals.getSymbolParent(symbol);
     if (parentSymbol) {
-      return this._symbolToDeclarationReference(
+      const parentRef: DeclarationReference | undefined = this._symbolToDeclarationReference(
         parentSymbol,
         parentSymbol.flags,
         /*includeModuleSymbols*/ true
       );
+      return this._collector
+        .getNamespacePath(symbol)
+        .reduce(
+          (parentRef, currentSymbol) =>
+            parentRef && parentRef.addNavigationStep(Navigation.Exports, currentSymbol),
+          parentRef
+        );
     }
 
     // If that doesn't work, try to find a parent symbol via the node tree. As far as we can tell,
