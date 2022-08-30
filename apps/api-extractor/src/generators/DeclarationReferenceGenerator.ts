@@ -276,13 +276,12 @@ export class DeclarationReferenceGenerator {
         parentSymbol.flags,
         /*includeModuleSymbols*/ true
       );
-      return this._collector
-        .getNamespacePath(symbol)
-        .reduce(
-          (parentRef, currentSymbol) =>
-            parentRef && parentRef.addNavigationStep(Navigation.Exports, currentSymbol),
-          parentRef
+      if (parentRef) {
+        return DeclarationReferenceGenerator._addNavigationSteps(
+          parentRef,
+          this._collector.getNamespacePath(symbol)
         );
+      }
     }
 
     // If that doesn't work, try to find a parent symbol via the node tree. As far as we can tell,
@@ -348,5 +347,15 @@ export class DeclarationReferenceGenerator {
       }
     }
     return GlobalSource.instance;
+  }
+
+  private static _addNavigationSteps(
+    declaration: DeclarationReference,
+    components: string[]
+  ): DeclarationReference {
+    return components.reduce(
+      (declaration, component) => declaration.addNavigationStep(Navigation.Exports, component),
+      declaration
+    );
   }
 }
