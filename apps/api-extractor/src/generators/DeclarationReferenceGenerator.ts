@@ -228,7 +228,7 @@ export class DeclarationReferenceGenerator {
       return undefined;
     }
 
-    let localName: string = followedSymbol.name;
+    let localName: string = this._collector.getEmitName(followedSymbol);
     if (followedSymbol.escapedName === ts.InternalSymbolName.Constructor) {
       localName = 'constructor';
     } else {
@@ -271,11 +271,17 @@ export class DeclarationReferenceGenerator {
     // First, try to find a parent symbol via the symbol tree.
     const parentSymbol: ts.Symbol | undefined = TypeScriptInternals.getSymbolParent(symbol);
     if (parentSymbol) {
-      return this._symbolToDeclarationReference(
+      const parentRef: DeclarationReference | undefined = this._symbolToDeclarationReference(
         parentSymbol,
         parentSymbol.flags,
         /*includeModuleSymbols*/ true
       );
+      if (parentRef) {
+        return DeclarationReferenceGenerator._addNavigationSteps(
+          parentRef,
+          this._collector.getNamespacePath(symbol)
+        );
+      }
     }
 
     // If that doesn't work, try to find a parent symbol via the node tree. As far as we can tell,
@@ -341,5 +347,15 @@ export class DeclarationReferenceGenerator {
       }
     }
     return GlobalSource.instance;
+  }
+
+  private static _addNavigationSteps(
+    declaration: DeclarationReference,
+    components: string[]
+  ): DeclarationReference {
+    return components.reduce(
+      (declaration, component) => declaration.addNavigationStep(Navigation.Exports, component),
+      declaration
+    );
   }
 }

@@ -189,6 +189,27 @@ export class CollectorEntity {
     return this._localExportNamesByParent.size > 0;
   }
 
+  public getParentPath(): string[] {
+    let current: CollectorEntity | undefined = this;
+    const result: string[] = [];
+    while (current) {
+      current = current._getFirstParent();
+      if (current) {
+        result.unshift(current.nameForEmit ?? current.singleExportName!);
+      }
+    }
+    return result;
+  }
+
+  private _getFirstParent(): CollectorEntity | undefined {
+    for (const [parent, localExportNames] of this._localExportNamesByParent) {
+      if (parent.consumable && localExportNames.size > 0) {
+        return parent;
+      }
+    }
+    return undefined;
+  }
+
   /**
    * Adds a new export name to the entity.
    */
